@@ -1,17 +1,53 @@
-// Uncomment the code below and write your tests
-/* import axios from 'axios';
-import { throttledGetDataFromApi } from './index'; */
+import axios, { AxiosInstance } from 'axios';
+import { throttledGetDataFromApi } from './index';
+
+jest.mock('lodash', () => {
+  const originalModule = jest.requireActual<typeof import('lodash')>('lodash');
+  return {
+    __esModule: true,
+    ...originalModule,
+    throttle: jest.fn((fn) => fn),
+  };
+});
+
+jest.mock('axios');
 
 describe('throttledGetDataFromApi', () => {
   test('should create instance with provided base url', async () => {
-    // Write your test here
+    const mockedAxiosInstance: Pick<AxiosInstance, 'get'> = {
+      get: jest.fn().mockResolvedValue({ data: '' }),
+    };
+    (axios.create as jest.MockedFunction<typeof axios.create>).mockReturnValue(
+      mockedAxiosInstance as unknown as AxiosInstance,
+    );
+    await throttledGetDataFromApi('relativePath');
+    expect(axios.create).toHaveBeenCalledWith({
+      baseURL: 'https://jsonplaceholder.typicode.com',
+    });
   });
 
   test('should perform request to correct provided url', async () => {
-    // Write your test here
+    const mockedAxiosInstance: Pick<AxiosInstance, 'get'> = {
+      get: jest.fn().mockResolvedValue({ data: 'test data' }),
+    };
+    (axios.create as jest.MockedFunction<typeof axios.create>).mockReturnValue(
+      mockedAxiosInstance as AxiosInstance,
+    );
+
+    await throttledGetDataFromApi('relativePath');
+    expect(mockedAxiosInstance.get).toHaveBeenCalledWith('relativePath');
   });
 
   test('should return response data', async () => {
-    // Write your test here
+    const mockedAxiosInstance: unknown = {
+      get: jest.fn().mockResolvedValue({ data: 'test data' }),
+    };
+    (axios.create as jest.MockedFunction<typeof axios.create>).mockReturnValue(
+      mockedAxiosInstance as AxiosInstance,
+    );
+
+    const response = await throttledGetDataFromApi('relativePath');
+
+    expect(response).toEqual('test data');
   });
 });
