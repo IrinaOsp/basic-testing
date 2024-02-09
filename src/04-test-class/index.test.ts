@@ -1,4 +1,9 @@
-import { getBankAccount } from '.';
+import {
+  InsufficientFundsError,
+  SynchronizationFailedError,
+  TransferFailedError,
+  getBankAccount,
+} from '.';
 import lodash from 'lodash';
 
 describe('BankAccount', () => {
@@ -9,26 +14,34 @@ describe('BankAccount', () => {
   });
 
   test('should throw InsufficientFundsError error when withdrawing more than balance', () => {
-    expect(() => getBankAccount(0).withdraw(1)).toThrowError();
-    expect(() => getBankAccount(100).withdraw(101)).toThrowError();
-    expect(() => getBankAccount(-100500).withdraw(100501)).toThrowError();
+    expect(() => getBankAccount(0).withdraw(1)).toThrowError(
+      InsufficientFundsError,
+    );
+    expect(() => getBankAccount(100).withdraw(101)).toThrowError(
+      InsufficientFundsError,
+    );
+    expect(() => getBankAccount(-100500).withdraw(100501)).toThrowError(
+      InsufficientFundsError,
+    );
   });
 
   test('should throw error when transferring more than balance', () => {
     expect(() =>
-      getBankAccount(0).transfer(1, getBankAccount(0)),
-    ).toThrowError();
+      getBankAccount(0).transfer(1, getBankAccount(10)),
+    ).toThrowError(InsufficientFundsError);
     expect(() =>
       getBankAccount(300).transfer(500, getBankAccount(1000)),
-    ).toThrowError();
+    ).toThrowError(InsufficientFundsError);
     expect(() =>
       getBankAccount(-100500).transfer(100501, getBankAccount(100000)),
-    ).toThrowError();
+    ).toThrowError(InsufficientFundsError);
   });
 
   test('should throw error when transferring to the same account', () => {
     const account = getBankAccount(600);
-    expect(() => account.transfer(600, account)).toThrowError();
+    expect(() => account.transfer(600, account)).toThrowError(
+      TransferFailedError,
+    );
   });
 
   test('should deposit money', () => {
@@ -64,6 +77,8 @@ describe('BankAccount', () => {
   test('should throw SynchronizationFailedError if fetchBalance returned null', async () => {
     jest.spyOn(lodash, 'random').mockReturnValueOnce(50).mockReturnValueOnce(0);
     const account = getBankAccount(100);
-    await expect(account.synchronizeBalance()).rejects.toThrowError();
+    await expect(account.synchronizeBalance()).rejects.toThrowError(
+      SynchronizationFailedError,
+    );
   });
 });
